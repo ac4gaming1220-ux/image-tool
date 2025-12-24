@@ -1,1 +1,1 @@
-{"name":"WebP Tool","short_name":"WebP","description":"WebAssemblyを使った画像圧縮ツール","start_url":"./index.html","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","lang":"en","scope":"./","icons":[{"src":"icon.png","sizes":"512x512","type":"image/png"}]}
+{"name":"画像圧縮│webp変換ツール","short_name":"WebPツール","description":"複数画像を一括でWebPに変換するツール","start_url":"./index.html","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","lang":"en","scope":"./","icons":[{"src":"icon.png","sizes":"512x512","type":"image/png"}]}
