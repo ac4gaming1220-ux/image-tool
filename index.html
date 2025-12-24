@@ -3,67 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebP Converter Wasm</title>
+    <title>画像圧縮│webp変換ツール</title>
     <meta name="theme-color" content="#ffffff">
     <link rel="apple-touch-icon" href="/icon.png">
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; background: #f9f9f9; }
-        h1 { text-align: center; font-size: 1.5rem; }
+        /* UIデザインの整理 */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #333; background: #f4f7f6; }
+        h1 { text-align: center; font-size: 1.5rem; margin-bottom: 1.5rem; color: #444; }
         
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
-        .radio-group label { display: block; margin-bottom: 10px; cursor: pointer; font-size: 1.1em;}
-        .radio-group input { transform: scale(1.2); margin-right: 10px; }
+        /* ラジオボタンエリア */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        .radio-label {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .radio-label:hover { background: #f0f0f0; }
+        .radio-label input { transform: scale(1.2); margin-right: 8px; }
 
         /* アップロードエリア */
         .upload-area { 
-            border: 2px dashed #ccc; padding: 30px; text-align: center; border-radius: 8px; cursor: pointer; background: #fafafa; transition: 0.2s;
+            border: 2px dashed #ccc; padding: 40px 20px; text-align: center; border-radius: 8px; cursor: pointer; background: #fafafa; transition: 0.2s;
         }
-        .upload-area:hover { background: #eee; }
-        /* ドラッグ中の色変え用 */
+        .upload-area:hover { background: #eee; border-color: #aaa; }
         .upload-area.highlight { border-color: #007bff; background-color: #e6f2ff; }
         
-        #preview { max-width: 100%; display: none; margin-top: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        
-        #saveBtn {
-            display: block; width: 100%; padding: 15px; background: #ccc; color: white; 
-            text-align: center; text-decoration: none; border-radius: 30px; font-weight: bold; pointer-events: none; margin-top: 10px;
+        /* 結果表示グリッド */
+        #result-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
         }
-        #saveBtn.active { background: #007bff; pointer-events: auto; }
 
-        .size-highlight { color: #d63384; font-weight: bold; font-size: 1.2em; }
+        /* 個別の画像カード */
+        .img-card {
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            font-size: 0.9rem;
+        }
+        .img-card img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .img-card .file-name {
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 5px;
+            word-break: break-all;
+            text-align: center;
+            line-height: 1.2;
+        }
+        .img-card .file-size {
+            font-weight: bold;
+            color: #d63384;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+        }
+        .download-btn {
+            display: inline-block;
+            padding: 6px 12px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            transition: background 0.2s;
+        }
+        .download-btn:hover { background: #0056b3; }
+
+        #statusMessage {
+            text-align: center; margin-top: 15px; display: none; font-weight: bold; color: #007bff;
+        }
     </style>
 </head>
 <body>
-    <h1>WebP Converter (Ultra)</h1>
+    <h1>画像圧縮│webp変換ツール</h1>
 
     <div class="card">
-        <p><strong>① サイズ選択</strong></p>
-        <div class="radio-group">
-            <label><input type="radio" name="width" value="640" checked> 640px (スマホ用)</label>
-            <label><input type="radio" name="width" value="1280"> 1280px (HD画質)</label>
-            <label><input type="radio" name="width" value="1920"> 1920px (フルHD)</label>
+        <p><strong>① サイズ (横幅)</strong></p>
+        <div class="options-grid">
+            <label class="radio-label"><input type="radio" name="width" value="320"> 320px (小)</label>
+            <label class="radio-label"><input type="radio" name="width" value="640" checked> 640px (中)</label>
+            <label class="radio-label"><input type="radio" name="width" value="1280"> 1280px (HD)</label>
+            <label class="radio-label"><input type="radio" name="width" value="1920"> 1920px (FHD)</label>
+            <label class="radio-label"><input type="radio" name="width" value="original"> そのまま</label>
         </div>
-        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-        <p><strong>② 画質設定</strong></p>
-        <div class="radio-group">
-            <label><input type="radio" name="quality" value="30"> 画質 30 (低画質・軽量)</label>
-            <label><input type="radio" name="quality" value="75" checked> 画質 75 (推奨・高画質)</label>
+        
+        <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+        
+        <p><strong>② 画質</strong></p>
+        <div class="options-grid">
+            <label class="radio-label"><input type="radio" name="quality" value="30"> 低画質 (30)</label>
+            <label class="radio-label"><input type="radio" name="quality" value="75" checked> 推奨 (75)</label>
+            <label class="radio-label"><input type="radio" name="quality" value="90"> 高画質 (90)</label>
         </div>
     </div>
 
     <div class="card">
         <div class="upload-area" id="dropZone">
-            <p id="dropText">画像をタップして選択<br>(またはドラッグ&ドロップ)</p>
-            <input type="file" id="uploadInput" accept="image/*" style="display: none;">
+            <p><strong>ここをクリックして画像を選択</strong><br><small>またはドラッグ＆ドロップ (複数可)</small></p>
+            <input type="file" id="uploadInput" accept="image/*" multiple style="display: none;">
         </div>
-        
-        <p id="placeholderText" style="text-align:center; color:#aaa; margin-top:20px; font-size:0.9em;">ここに結果が表示されます</p>
-        <img id="preview">
-        <div id="metaInfo" style="margin-top:15px; line-height:1.6; font-size:0.95em;"></div>
-    </div>
 
-    <a id="saveBtn">画像を保存する</a>
+        <div id="statusMessage">処理中...</div>
+        
+        <div id="result-container"></div>
+    </div>
 
     <script type="module" src="/src/main.js"></script>
 </body>

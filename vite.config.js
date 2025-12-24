@@ -1,9 +1,7 @@
-// vite.config.js
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  // ★これがないとGitHub Pagesで画面が真っ白になります
   base: './',
 
   optimizeDeps: {
@@ -27,16 +25,17 @@ export default defineConfig({
       },
       includeAssets: ['icon.png'],
       manifest: {
-        name: 'WebP Tool',
-        short_name: 'WebP',
-        description: 'WebAssemblyを使った画像圧縮ツール',
-        start_url: './index.html', // ★ここも ./ をつけておくと安全です
+        // 名称を変更
+        name: '画像圧縮│webp変換ツール',
+        short_name: 'WebPツール',
+        description: '複数画像を一括でWebPに変換するツール',
+        start_url: './index.html',
         display: 'standalone',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         icons: [
           {
-            src: 'icon.png', // ★ /icon.png から / を取りました（相対パス対応）
+            src: 'icon.png',
             sizes: '512x512',
             type: 'image/png'
           }
