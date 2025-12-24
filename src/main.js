@@ -10,6 +10,9 @@ const dropZone = document.getElementById('dropZone');
 const resultContainer = document.getElementById('result-container');
 const statusMessage = document.getElementById('statusMessage');
 
+// ★追加: 現在選択中のファイルを保持するリスト
+let currentFiles = [];
+
 // --- イベントリスナー設定 ---
 
 // 1. クリックでファイル選択
@@ -28,17 +31,46 @@ const preventDefaults = (e) => {
 dropZone.addEventListener('dragover', () => dropZone.classList.add('highlight'));
 ['dragleave', 'drop'].forEach(() => dropZone.classList.remove('highlight'));
 
-// 3. ファイル取得時の処理
-dropZone.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files));
-uploadInput.addEventListener('change', (e) => handleFiles(e.target.files));
+// 3. ファイル取得時の処理（保存して処理開始）
+dropZone.addEventListener('drop', (e) => {
+    const files = Array.from(e.dataTransfer.files);
+    handleNewFiles(files);
+});
+
+uploadInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    handleNewFiles(files);
+});
+
+// ★追加: ラジオボタンの変更を検知して再処理
+const radioInputs = document.querySelectorAll('input[type="radio"]');
+radioInputs.forEach(input => {
+    input.addEventListener('change', () => {
+        // すでに画像が選択されていたら再変換を実行
+        if (currentFiles.length > 0) {
+            processBatch(currentFiles);
+        }
+    });
+});
 
 
 // --- メイン処理 ---
 
-async function handleFiles(files) {
-    if (files.length === 0) return;
+// 新しいファイルが来たときの処理
+function handleNewFiles(files) {
+    // 画像のみにフィルタリング
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length === 0) return;
 
-    // 設定値の取得
+    // ★リストを更新して処理開始
+    currentFiles = imageFiles;
+    processBatch(currentFiles);
+}
+
+// 一括処理関数
+async function processBatch(files) {
+    // 設定値の取得 (現在のDOMの状態を見る)
     const widthOption = document.querySelector('input[name="width"]:checked').value;
     const qualityOption = parseInt(document.querySelector('input[name="quality"]:checked').value);
 
@@ -51,19 +83,16 @@ async function handleFiles(files) {
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        // 画像以外はスキップ
-        if (!file.type.startsWith('image/')) continue;
-
         statusMessage.textContent = `変換中... (${i + 1} / ${files.length}): ${file.name}`;
         
-        // 処理が重くなりすぎないよう少し待機
+        // 処理が重くなりすぎないよう少し待機 (UIスレッドを解放)
         await new Promise(r => setTimeout(r, 10)); 
         
         await processSingleImage(file, widthOption, qualityOption);
     }
 
-    statusMessage.textContent = 'すべての処理が完了しました！';
-    setTimeout(() => { statusMessage.style.display = 'none'; }, 3000);
+    statusMessage.textContent = '完了しました！';
+    setTimeout(() => { statusMessage.style.display = 'none'; }, 2000);
 }
 
 
@@ -112,7 +141,8 @@ async function processSingleImage(file, targetWidthStr, quality) {
 
     } catch (error) {
         console.error('Conversion Error:', error);
-        alert(`${file.name} の変換中にエラーが発生しました。`);
+        // エラー時はアラートを出さずにコンソールのみ（連続処理を止めないため）
+        statusMessage.textContent = `エラー: ${file.name}`;
     }
 }
 
@@ -137,7 +167,9 @@ function createResultCard(dataUrl, originalFile, newBlob, w, h) {
     sizeP.className = 'file-size';
     const newSizeKB = (newBlob.size / 1024).toFixed(1);
     const reduction = Math.round((1 - newBlob.size / originalFile.size) * 100);
-    sizeP.textContent = `${newSizeKB} KB (-${reduction}%)`;
+    
+    // 赤字で軽量化率を表示
+    sizeP.innerHTML = `${newSizeKB} KB <span style="color:#d63384">(-${reduction}%)</span>`;
 
     // ダウンロードボタン
     const link = document.createElement('a');
