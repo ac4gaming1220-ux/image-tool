@@ -2,239 +2,188 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebP Converter UI</title>
-<style>
-    :root {
-        --primary: #0071e3;
-        --bg: #f5f5f7;
-        --surface: #ffffff;
-        --border: #d2d2d7;
-    }
-    body { 
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-        padding: 20px; 
-        max-width: 900px; /* 横幅を少し広げました */
-        margin: 0 auto; 
-        background: var(--bg); 
-        color: #1d1d1f; 
-    }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    h1 {
-        text-align: center;
-        margin-bottom: 30px;
-        font-size: 1.8rem;
-    }
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-title" content="WebP変換">
 
-    /* レイアウト: 左パネルと右パネル */
-    .app-container { 
-        display: grid; 
-        grid-template-columns: 320px 1fr; /* 左側を固定幅、右側を残りの幅に */
-        gap: 30px; 
-        align-items: start; /* 上揃え */
-    }
+    <title>WebP Converter</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background: #f5f5f7; color: #1d1d1f; }
+        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        h1 { font-size: 1.4rem; text-align: center; margin-bottom: 15px; }
+        .control-group { margin-bottom: 20px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.95rem; }
+        
+        select, input[type="file"] { width: 100%; padding: 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background: #fff; }
+        
+        /* 結果エリア */
+        #resultArea { margin-top: 25px; display: none; border-top: 1px solid #e5e5e5; padding-top: 20px; }
+        .result-meta { background: #f5f5f7; padding: 15px; border-radius: 8px; font-size: 0.9rem; line-height: 1.6; margin-bottom: 15px; }
+        
+        img#preview { width: 100%; border-radius: 8px; border: 1px solid #eee; margin-top: 10px; }
 
-    /* 左側：操作パネル */
-    .controls { 
-        background: var(--surface); 
-        padding: 25px; 
-        border-radius: 18px; 
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
-        display: flex;       /* flexboxにして */
-        flex-direction: column; /* 縦並びにする */
-        gap: 25px;           /* 要素間の間隔を統一 */
-    }
-    
-    /* 右側：プレビューエリア */
-    .preview-area { 
-        background: var(--surface); 
-        padding: 25px; 
-        border-radius: 18px; 
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
-        text-align: center; 
-        min-height: 500px; /* 高さを確保 */
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        justify-content: center;
-    }
-    
-    h2 { 
-        font-size: 1rem; 
-        margin: 0 0 10px 0; 
-        color: #86868b; 
-        font-weight: 600; 
-        text-transform: uppercase; 
-    }
-    
-    /* ファイル選択エリアの修正 */
-    .file-drop { 
-        border: 2px dashed var(--primary); /* 枠線を最初から青にして分かりやすく */
-        background: #f0f8ff;
-        border-radius: 12px; 
-        padding: 40px 20px; /* パディングを増やして押しやすく */
-        text-align: center; 
-        cursor: pointer; 
-        transition: 0.2s; 
-        display: block; /* ブロック要素にして幅いっぱいに */
-        font-weight: bold;
-        color: var(--primary);
-    }
-    .file-drop:hover { 
-        background: #e1f0ff; 
-        transform: translateY(-2px);
-    }
-    input[type="file"] { display: none; } 
-
-    /* ラジオボタンエリア */
-    .radio-section {
-        margin-bottom: 10px;
-    }
-
-    .radio-group { 
-        display: grid; 
-        grid-template-columns: 1fr 1fr; /* 2列 */
-        gap: 12px; 
-    }
-    
-    .radio-option { position: relative; }
-    .radio-option input { position: absolute; opacity: 0; cursor: pointer; width: 0; height: 0;}
-    
-    .radio-option label {
-        display: block; 
-        padding: 12px 5px; /* 上下左右 */
-        text-align: center;
-        border: 1px solid var(--border); 
-        border-radius: 10px;
-        font-weight: 600; 
-        font-size: 0.9rem;
-        cursor: pointer; 
-        transition: 0.2s;
-        background: white;
-    }
-    
-    .radio-option input:checked + label {
-        background: var(--primary); 
-        color: white; 
-        border-color: var(--primary); 
-        box-shadow: 0 4px 10px rgba(0,113,227,0.3);
-    }
-
-    /* 画像プレビュー */
-    img#preview { 
-        max-width: 100%; 
-        max-height: 600px; 
-        border-radius: 8px; 
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-        margin-bottom: 20px; 
-        display: none; 
-    }
-    
-    .meta-info { 
-        font-size: 0.95rem; 
-        line-height: 1.8; 
-        color: #555; 
-        margin-bottom: 25px; 
-        min-height: 60px;
-        background: #f9f9f9;
-        padding: 15px;
-        border-radius: 10px;
-        width: 100%;
-        box-sizing: border-box;
-    }
-    .size-highlight { color: var(--primary); font-weight: bold; font-size: 1.3rem; }
-
-    .btn-save {
-        background: #28a745; 
-        color: white; 
-        border: none; 
-        padding: 18px 60px;
-        font-size: 1.1rem; 
-        font-weight: bold; 
-        border-radius: 50px;
-        cursor: pointer; 
-        text-decoration: none; 
-        display: inline-block;
-        box-shadow: 0 4px 15px rgba(40,167,69,0.3); 
-        transition: 0.2s;
-        opacity: 0.5; 
-        pointer-events: none;
-    }
-    .btn-save.active { opacity: 1; pointer-events: auto; }
-    .btn-save:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(40,167,69,0.4); }
-
-    /* スマホ対応 */
-    @media (max-width: 768px) {
-        .app-container { 
-            grid-template-columns: 1fr; /* スマホでは縦並び */
-            gap: 20px;
+        .btn-dl { 
+            display: block; width: 100%; text-align: center; background: #0071e3; color: white; 
+            padding: 14px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 1.1rem;
+            box-sizing: border-box;
         }
-        .controls {
-            order: 2; /* 操作パネルを下に */
-        }
-        .preview-area {
-            order: 1; /* プレビューを上に */
-            min-height: 300px;
-        }
-    }
-</style>
+        .btn-dl:active { background: #005bb5; }
+    </style>
 </head>
 <body>
 
-    <h1 style="text-align:center; margin-bottom:30px;">WebP Converter</h1>
+    <div class="container">
+        <h1>WebP 画像軽量化ツール</h1>
 
-    <div class="app-container">
-        <div class="controls">
-            <label class="file-drop">
-                <span id="dropText">📁 画像を選択 / タップ</span>
-                <input type="file" id="uploadInput" accept="image/*">
-            </label>
-
-            <h2>① サイズ (幅)</h2>
-            <div class="radio-group">
-                <div class="radio-option">
-                    <input type="radio" name="width" value="1280" id="w1280" checked>
-                    <label for="w1280">1280 px</label>
-                </div>
-                <div class="radio-option">
-                    <input type="radio" name="width" value="960" id="w960">
-                    <label for="w960">960 px</label>
-                </div>
-                <div class="radio-option">
-                    <input type="radio" name="width" value="640" id="w640">
-                    <label for="w640">640 px</label>
-                </div>
-                <div class="radio-option">
-                    <input type="radio" name="width" value="320" id="w320">
-                    <label for="w320">320 px</label>
-                </div>
-            </div>
-
-            <h2>② クオリティ</h2>
-            <div class="radio-group">
-                <div class="radio-option">
-                    <input type="radio" name="quality" value="75" id="q75" checked>
-                    <label for="q75">標準 (75)</label>
-                </div>
-                <div class="radio-option">
-                    <input type="radio" name="quality" value="30" id="q30">
-                    <label for="q30">軽量 (30)</label>
-                </div>
-            </div>
+        <div class="control-group">
+            <label>① 画像の幅 (サイズ変更)</label>
+            <select id="widthSelect">
+                <option value="640">640px (軽量・スマホ向け)</option>
+                <option value="800">800px</option>
+                <option value="1280" selected>1280px (HD・高画質)</option>
+                <option value="1920">1920px (FHD)</option>
+                <option value="0">オリジナルサイズ (変更なし)</option>
+            </select>
         </div>
 
-        <div class="preview-area">
-            <div id="placeholderText" style="color:#aaa;">画像を選択するとここにプレビューが表示されます</div>
-            <img id="preview">
-            
-            <div class="meta-info" id="metaInfo"></div>
-            
-            <a id="saveBtn" class="btn-save" href="#" download>
-                保存する
-            </a>
+        <div class="control-group">
+            <label>② 画質設定</label>
+            <select id="qualityRange">
+                <option value="0.3">画質 30 (低画質・軽量)</option>
+                <option value="0.75" selected>画質 75 (高画質・標準)</option>
+                <option value="0.1">画質 10 (限界圧縮)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>③ 画像を選択</label>
+            <input type="file" id="uploadInput" accept="image/png, image/jpeg, image/jpg">
+        </div>
+
+        <div id="resultArea">
+            <div class="result-meta" id="metaInfo">処理中...</div>
+            <a id="dlLink" href="#" class="btn-dl" download="converted.webp">画像を保存</a>
+            <img id="preview" alt="プレビュー">
         </div>
     </div>
 
-    <script type="module" src="/src/main.js"></script>
+    <script>
+        // 要素の取得
+        const input = document.getElementById('uploadInput');
+        const widthSelect = document.getElementById('widthSelect');
+        const qualityRange = document.getElementById('qualityRange');
+        // ★以前あった qValue (数値表示) はHTMLから消えたのでJSからも削除しました
+        
+        const resultArea = document.getElementById('resultArea');
+        const preview = document.getElementById('preview');
+        const metaInfo = document.getElementById('metaInfo');
+        const dlLink = document.getElementById('dlLink');
+
+        let currentFile = null;
+
+        // イベントリスナー
+        input.addEventListener('change', e => {
+            currentFile = e.target.files[0];
+            processImage();
+        });
+
+        widthSelect.addEventListener('change', processImage);
+        
+        // 選択肢を変えたら再変換
+        qualityRange.addEventListener('change', processImage);
+
+        // 画像処理のメイン関数
+        function processImage() {
+            if (!currentFile) return;
+
+            // iOSのHEIC対策などはできないため、読み込めない場合はここで止まる
+            if (currentFile.type === 'image/heic') {
+                alert('HEIC形式は対応していません。JPGかPNGを選んでください。');
+                return;
+            }
+
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    // 1. リサイズ計算
+                    let w = img.width;
+                    let h = img.height;
+                    const maxW = parseInt(widthSelect.value);
+                    
+                    if (maxW > 0 && w > maxW) {
+                        h = Math.round(h * (maxW / w));
+                        w = maxW;
+                    }
+
+                    // 2. Canvas描画
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // 白背景で塗りつぶす（PNG透過対策）
+                    ctx.fillStyle = "#FFFFFF";
+                    ctx.fillRect(0, 0, w, h);
+                    
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    // 3. WebP変換
+                    const q = parseFloat(qualityRange.value);
+
+                    canvas.toBlob(blob => {
+                        if (!blob) {
+                            alert('変換に失敗しました。');
+                            return;
+                        }
+
+                        const url = URL.createObjectURL(blob);
+                        
+                        // ファイルサイズ計算
+                        const kb = (blob.size / 1024).toFixed(1);
+                        const origKb = (currentFile.size / 1024).toFixed(1);
+                        const isWebP = blob.type === 'image/webp';
+                        
+                        // 表示更新
+                        preview.src = url;
+                        
+                        let color = kb < 50 ? '#28a745' : (kb < 200 ? '#fd7e14' : '#dc3545');
+
+                        let infoText = `元: ${origKb} KB → 変換後: <strong style="color:${color}">${kb} KB</strong><br>サイズ: ${w} x ${h} px`;
+                        
+                        if (!isWebP) {
+                            infoText += `<br><span style="color:red; font-size:0.8em">※このブラウザはWebP保存に非対応のためPNGになりました</span>`;
+                        }
+
+                        metaInfo.innerHTML = infoText;
+
+                        // ダウンロードリンク設定
+                        dlLink.href = url;
+                        const name = currentFile.name.replace(/\.[^.]+$/, '');
+                        const suffix = maxW > 0 ? `_${maxW}w` : '';
+                        const ext = isWebP ? '.webp' : '.png';
+                        dlLink.download = `${name}${suffix}${ext}`;
+
+                        resultArea.style.display = 'block';
+
+                    }, 'image/webp', q);
+                };
+                
+                // 画像読み込みエラー時
+                img.onerror = function() {
+                    alert('画像の読み込みに失敗しました。壊れたファイルか、対応していない形式です。');
+                };
+
+                img.src = e.target.result;
+            };
+            
+            reader.readAsDataURL(currentFile);
+        }
+    </script>
 </body>
 </html>
