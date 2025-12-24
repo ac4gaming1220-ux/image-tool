@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebP Converter Wasm</title>
+    <meta name="theme-color" content="#ffffff">
+    <link rel="apple-touch-icon" href="./icon.png">
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; background: #f9f9f9; }
+        h1 { text-align: center; font-size: 1.5rem; }
+        
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        .radio-group label { display: block; margin-bottom: 10px; cursor: pointer; font-size: 1.1em;}
+        .radio-group input { transform: scale(1.2); margin-right: 10px; }
+
+        /* アップロードエリア */
+        .upload-area { 
+            border: 2px dashed #ccc; padding: 30px; text-align: center; border-radius: 8px; cursor: pointer; background: #fafafa; transition: 0.2s;
+        }
+        .upload-area:hover { background: #eee; }
+        /* ドラッグ中の色変え用 */
+        .upload-area.highlight { border-color: #007bff; background-color: #e6f2ff; }
+        
+        #preview { max-width: 100%; display: none; margin-top: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        #saveBtn {
+            display: block; width: 100%; padding: 15px; background: #ccc; color: white; 
+            text-align: center; text-decoration: none; border-radius: 30px; font-weight: bold; pointer-events: none; margin-top: 10px;
+        }
+        #saveBtn.active { background: #007bff; pointer-events: auto; }
+
+        .size-highlight { color: #d63384; font-weight: bold; font-size: 1.2em; }
+    </style>
+  <script type="module" crossorigin src="./assets/index-7VFyvLBL.js"></script>
+<link rel="manifest" href="./manifest.webmanifest"></head>
+<body>
+    <h1>WebP Converter (Ultra)</h1>
+
+    <div class="card">
+        <p><strong>① サイズ選択</strong></p>
+        <div class="radio-group">
+            <label><input type="radio" name="width" value="640" checked> 640px (スマホ用)</label>
+            <label><input type="radio" name="width" value="1280"> 1280px (HD画質)</label>
+            <label><input type="radio" name="width" value="1920"> 1920px (フルHD)</label>
+        </div>
+        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+        <p><strong>② 画質設定</strong></p>
+        <div class="radio-group">
+            <label><input type="radio" name="quality" value="30"> 画質 30 (低画質・軽量)</label>
+            <label><input type="radio" name="quality" value="75" checked> 画質 75 (推奨・高画質)</label>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="upload-area" id="dropZone">
+            <p id="dropText">画像をタップして選択<br>(またはドラッグ&ドロップ)</p>
+            <input type="file" id="uploadInput" accept="image/*" style="display: none;">
+        </div>
+        
+        <p id="placeholderText" style="text-align:center; color:#aaa; margin-top:20px; font-size:0.9em;">ここに結果が表示されます</p>
+        <img id="preview">
+        <div id="metaInfo" style="margin-top:15px; line-height:1.6; font-size:0.95em;"></div>
+    </div>
+
+    <a id="saveBtn">画像を保存する</a>
+
+</body>
+</html>
