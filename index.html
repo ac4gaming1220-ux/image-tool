@@ -2,188 +2,69 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="format-detection" content="telephone=no">
-    <meta name="apple-mobile-web-app-title" content="WebP変換">
-
-    <title>WebP Converter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebP Converter Wasm</title>
+    <meta name="theme-color" content="#ffffff">
+    <link rel="apple-touch-icon" href="/icon.png">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background: #f5f5f7; color: #1d1d1f; }
-        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; background: #f9f9f9; }
+        h1 { text-align: center; font-size: 1.5rem; }
         
-        h1 { font-size: 1.4rem; text-align: center; margin-bottom: 15px; }
-        .control-group { margin-bottom: 20px; }
-        label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.95rem; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
-        select, input[type="file"] { width: 100%; padding: 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background: #fff; }
-        
-        /* 結果エリア */
-        #resultArea { margin-top: 25px; display: none; border-top: 1px solid #e5e5e5; padding-top: 20px; }
-        .result-meta { background: #f5f5f7; padding: 15px; border-radius: 8px; font-size: 0.9rem; line-height: 1.6; margin-bottom: 15px; }
-        
-        img#preview { width: 100%; border-radius: 8px; border: 1px solid #eee; margin-top: 10px; }
+        .radio-group label { display: block; margin-bottom: 10px; cursor: pointer; font-size: 1.1em;}
+        .radio-group input { transform: scale(1.2); margin-right: 10px; }
 
-        .btn-dl { 
-            display: block; width: 100%; text-align: center; background: #0071e3; color: white; 
-            padding: 14px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 1.1rem;
-            box-sizing: border-box;
+        /* アップロードエリア */
+        .upload-area { 
+            border: 2px dashed #ccc; padding: 30px; text-align: center; border-radius: 8px; cursor: pointer; background: #fafafa; transition: 0.2s;
         }
-        .btn-dl:active { background: #005bb5; }
+        .upload-area:hover { background: #eee; }
+        /* ドラッグ中の色変え用 */
+        .upload-area.highlight { border-color: #007bff; background-color: #e6f2ff; }
+        
+        #preview { max-width: 100%; display: none; margin-top: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        #saveBtn {
+            display: block; width: 100%; padding: 15px; background: #ccc; color: white; 
+            text-align: center; text-decoration: none; border-radius: 30px; font-weight: bold; pointer-events: none; margin-top: 10px;
+        }
+        #saveBtn.active { background: #007bff; pointer-events: auto; }
+
+        .size-highlight { color: #d63384; font-weight: bold; font-size: 1.2em; }
     </style>
 </head>
 <body>
+    <h1>WebP Converter (Ultra)</h1>
 
-    <div class="container">
-        <h1>WebP 画像軽量化ツール</h1>
-
-        <div class="control-group">
-            <label>① 画像の幅 (サイズ変更)</label>
-            <select id="widthSelect">
-                <option value="640">640px (軽量・スマホ向け)</option>
-                <option value="800">800px</option>
-                <option value="1280" selected>1280px (HD・高画質)</option>
-                <option value="1920">1920px (FHD)</option>
-                <option value="0">オリジナルサイズ (変更なし)</option>
-            </select>
+    <div class="card">
+        <p><strong>① サイズ選択</strong></p>
+        <div class="radio-group">
+            <label><input type="radio" name="width" value="640" checked> 640px (スマホ用)</label>
+            <label><input type="radio" name="width" value="1280"> 1280px (HD画質)</label>
+            <label><input type="radio" name="width" value="1920"> 1920px (フルHD)</label>
         </div>
-
-        <div class="control-group">
-            <label>② 画質設定</label>
-            <select id="qualityRange">
-                <option value="0.3">画質 30 (低画質・軽量)</option>
-                <option value="0.75" selected>画質 75 (高画質・標準)</option>
-                <option value="0.1">画質 10 (限界圧縮)</option>
-            </select>
-        </div>
-
-        <div class="control-group">
-            <label>③ 画像を選択</label>
-            <input type="file" id="uploadInput" accept="image/png, image/jpeg, image/jpg">
-        </div>
-
-        <div id="resultArea">
-            <div class="result-meta" id="metaInfo">処理中...</div>
-            <a id="dlLink" href="#" class="btn-dl" download="converted.webp">画像を保存</a>
-            <img id="preview" alt="プレビュー">
+        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+        <p><strong>② 画質設定</strong></p>
+        <div class="radio-group">
+            <label><input type="radio" name="quality" value="30"> 画質 30 (低画質・軽量)</label>
+            <label><input type="radio" name="quality" value="75" checked> 画質 75 (推奨・高画質)</label>
         </div>
     </div>
 
-    <script>
-        // 要素の取得
-        const input = document.getElementById('uploadInput');
-        const widthSelect = document.getElementById('widthSelect');
-        const qualityRange = document.getElementById('qualityRange');
-        // ★以前あった qValue (数値表示) はHTMLから消えたのでJSからも削除しました
+    <div class="card">
+        <div class="upload-area" id="dropZone">
+            <p id="dropText">画像をタップして選択<br>(またはドラッグ&ドロップ)</p>
+            <input type="file" id="uploadInput" accept="image/*" style="display: none;">
+        </div>
         
-        const resultArea = document.getElementById('resultArea');
-        const preview = document.getElementById('preview');
-        const metaInfo = document.getElementById('metaInfo');
-        const dlLink = document.getElementById('dlLink');
+        <p id="placeholderText" style="text-align:center; color:#aaa; margin-top:20px; font-size:0.9em;">ここに結果が表示されます</p>
+        <img id="preview">
+        <div id="metaInfo" style="margin-top:15px; line-height:1.6; font-size:0.95em;"></div>
+    </div>
 
-        let currentFile = null;
+    <a id="saveBtn">画像を保存する</a>
 
-        // イベントリスナー
-        input.addEventListener('change', e => {
-            currentFile = e.target.files[0];
-            processImage();
-        });
-
-        widthSelect.addEventListener('change', processImage);
-        
-        // 選択肢を変えたら再変換
-        qualityRange.addEventListener('change', processImage);
-
-        // 画像処理のメイン関数
-        function processImage() {
-            if (!currentFile) return;
-
-            // iOSのHEIC対策などはできないため、読み込めない場合はここで止まる
-            if (currentFile.type === 'image/heic') {
-                alert('HEIC形式は対応していません。JPGかPNGを選んでください。');
-                return;
-            }
-
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    // 1. リサイズ計算
-                    let w = img.width;
-                    let h = img.height;
-                    const maxW = parseInt(widthSelect.value);
-                    
-                    if (maxW > 0 && w > maxW) {
-                        h = Math.round(h * (maxW / w));
-                        w = maxW;
-                    }
-
-                    // 2. Canvas描画
-                    const canvas = document.createElement('canvas');
-                    canvas.width = w;
-                    canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    
-                    // 白背景で塗りつぶす（PNG透過対策）
-                    ctx.fillStyle = "#FFFFFF";
-                    ctx.fillRect(0, 0, w, h);
-                    
-                    ctx.drawImage(img, 0, 0, w, h);
-
-                    // 3. WebP変換
-                    const q = parseFloat(qualityRange.value);
-
-                    canvas.toBlob(blob => {
-                        if (!blob) {
-                            alert('変換に失敗しました。');
-                            return;
-                        }
-
-                        const url = URL.createObjectURL(blob);
-                        
-                        // ファイルサイズ計算
-                        const kb = (blob.size / 1024).toFixed(1);
-                        const origKb = (currentFile.size / 1024).toFixed(1);
-                        const isWebP = blob.type === 'image/webp';
-                        
-                        // 表示更新
-                        preview.src = url;
-                        
-                        let color = kb < 50 ? '#28a745' : (kb < 200 ? '#fd7e14' : '#dc3545');
-
-                        let infoText = `元: ${origKb} KB → 変換後: <strong style="color:${color}">${kb} KB</strong><br>サイズ: ${w} x ${h} px`;
-                        
-                        if (!isWebP) {
-                            infoText += `<br><span style="color:red; font-size:0.8em">※このブラウザはWebP保存に非対応のためPNGになりました</span>`;
-                        }
-
-                        metaInfo.innerHTML = infoText;
-
-                        // ダウンロードリンク設定
-                        dlLink.href = url;
-                        const name = currentFile.name.replace(/\.[^.]+$/, '');
-                        const suffix = maxW > 0 ? `_${maxW}w` : '';
-                        const ext = isWebP ? '.webp' : '.png';
-                        dlLink.download = `${name}${suffix}${ext}`;
-
-                        resultArea.style.display = 'block';
-
-                    }, 'image/webp', q);
-                };
-                
-                // 画像読み込みエラー時
-                img.onerror = function() {
-                    alert('画像の読み込みに失敗しました。壊れたファイルか、対応していない形式です。');
-                };
-
-                img.src = e.target.result;
-            };
-            
-            reader.readAsDataURL(currentFile);
-        }
-    </script>
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html>
